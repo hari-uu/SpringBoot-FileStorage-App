@@ -1,0 +1,10 @@
+target/
+!target/*.jar
+.mvn/
+*.iml
+.idea/
+.git/
+.gitignore
+README.md
+uploads/
+.DS_Store
