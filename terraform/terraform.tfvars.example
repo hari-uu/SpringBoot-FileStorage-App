@@ -1,0 +1,30 @@
+# Example terraform.tfvars file
+# Copy this to terraform.tfvars and customize for your environment
+
+# AWS Configuration
+aws_region  = "us-east-1"
+environment = "dev"
+
+# Application Configuration
+app_name            = "file-storage-app"
+ecr_repository_name = "file-storage-app"
+
+# ECS Configuration
+ecs_cluster_name = "file-storage-cluster"
+ecs_service_name = "file-storage-service"
+ecs_task_family  = "file-storage-task"
+
+# Task Resources
+task_cpu    = "512"   # 0.5 vCPU
+task_memory = "1024"  # 1 GB
+
+# Service Configuration
+desired_count = 1  # Number of tasks to run
+
+# Database Configuration (update with your RDS endpoint)
+db_host = "localhost"  # Change to your RDS endpoint
+db_name = "filestorage_db"
+
+# S3 Configuration
+s3_bucket_name   = "file-storage-bucket-demo"  # Must be globally unique
+create_s3_bucket = false  # Set to true if you want to create S3 bucket

@@ -1,0 +1,88 @@
+pipeline {
+    agent any
+    
+    // Trigger on GitHub push events
+    triggers {
+        githubPush()
+    }
+    
+    environment {
+        // For local testing without AWS
+        IMAGE_TAG = "${BUILD_NUMBER}"
+        ECR_REPOSITORY = 'file-storage-app'
+    }
+    
+    stages {
+        stage('Validate Prerequisites') {
+            steps {
+                script {
+                    echo 'Checking required tools...'
+                    sh '''
+                        echo "Checking Maven..."
+                        mvn --version || (echo "ERROR: Maven not installed" && exit 1)
+                        
+                        echo "Checking Java..."
+                        java -version || (echo "ERROR: Java not installed" && exit 1)
+                        
+                        echo "Checking Docker..."
+                        docker --version || (echo "ERROR: Docker not installed" && exit 1)
+                        
+                        echo "Branch: ${GIT_BRANCH}"
+                        echo "Build Number: ${BUILD_NUMBER}"
+                    '''
+                }
+            }
+        }
+        
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+        
+        stage('Build JAR') {
+            steps {
+                sh 'mvn clean package -DskipTests'
+            }
+        }
+        
+        stage('Run Tests') {
+            steps {
+                sh 'mvn test'
+            }
+            post {
+                always {
+                    junit 'target/surefire-reports/*.xml'
+                }
+            }
+        }
+        
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    docker.build("${ECR_REPOSITORY}:${IMAGE_TAG}")
+                    docker.build("${ECR_REPOSITORY}:latest")
+                    echo "Docker images built successfully!"
+                    sh "docker images | grep ${ECR_REPOSITORY}"
+                }
+            }
+        }
+    }
+    
+    post {
+        success {
+            echo 'Pipeline succeeded! Docker image built successfully.'
+        }
+        failure {
+            echo 'Pipeline failed! Check logs for details.'
+        }
+        always {
+            script {
+                echo 'Cleaning up Docker images...'
+                sh """
+                    docker image prune -f || true
+                """
+            }
+        }
+    }
+}

@@ -147,7 +147,12 @@ pipeline {
             echo 'Pipeline failed! Check logs for details.'
         }
         always {
-            cleanWs()
+            script {
+                echo 'Cleaning up Docker images...'
+                sh """
+                    docker image prune -f || true
+                """
+            }
         }
     }
 }
