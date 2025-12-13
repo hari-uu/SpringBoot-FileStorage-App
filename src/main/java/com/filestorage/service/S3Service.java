@@ -1,6 +1,7 @@
 package com.filestorage.service;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
@@ -13,6 +14,7 @@ import java.io.IOException;
 import java.util.UUID;
 
 @Service
+@Profile("aws")
 public class S3Service {
     
     private final S3Client s3Client;
