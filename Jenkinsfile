@@ -23,10 +23,12 @@ pipeline {
         DEPLOY_BRANCH = 'main'
     }
     
-    tools {
-        maven 'Maven 3.9.11'
-        jdk 'JDK 17'
-    }
+    // Tools configuration - Configure these in Jenkins Global Tool Configuration
+    // Or comment out to use system Maven and JDK
+    // tools {
+    //     maven 'Maven 3.9.11'
+    //     jdk 'JDK 17'
+    // }
     
     stages {
         stage('Validate Prerequisites') {
