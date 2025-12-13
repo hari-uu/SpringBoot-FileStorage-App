@@ -19,6 +19,9 @@ pipeline {
         ECS_SERVICE = 'file-storage-service'
         ECS_TASK_DEFINITION = 'file-storage-task'
         
+        // Docker Configuration (for macOS Docker Desktop)
+        DOCKER_HOST = 'unix:///Users/hari/Library/Containers/com.docker.docker/Data/docker-cli.sock'
+        
         // Branch to deploy (only main/master branch will deploy to ECS)
         DEPLOY_BRANCH = 'main'
     }
