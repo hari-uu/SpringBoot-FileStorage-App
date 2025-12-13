@@ -82,8 +82,9 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    docker.build("${ECR_REPOSITORY}:${IMAGE_TAG}")
-                    docker.build("${ECR_REPOSITORY}:latest")
+                    // Build Docker image with current directory as context
+                    docker.build("${ECR_REPOSITORY}:${IMAGE_TAG}", ".")
+                    docker.build("${ECR_REPOSITORY}:latest", ".")
                 }
             }
         }
