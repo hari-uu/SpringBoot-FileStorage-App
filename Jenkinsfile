@@ -82,9 +82,18 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
+                    echo 'Pulling Docker base images...'
+                    sh '''
+                        docker pull maven:3.9.11-eclipse-temurin-17
+                        docker pull eclipse-temurin:17-jre
+                    '''
+                    
+                    echo 'Building Docker image...'
                     // Build Docker image with current directory as context
                     docker.build("${ECR_REPOSITORY}:${IMAGE_TAG}", ".")
-                    docker.build("${ECR_REPOSITORY}:latest", ".")
+                    
+                    echo 'Tagging as latest...'
+                    sh "docker tag ${ECR_REPOSITORY}:${IMAGE_TAG} ${ECR_REPOSITORY}:latest"
                 }
             }
         }
