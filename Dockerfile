@@ -13,11 +13,12 @@ COPY src ./src
 RUN mvn clean package -DskipTests
 
 # Stage 2: Create the runtime image
-FROM eclipse-temurin:17-jre-alpine
+# Using eclipse-temurin without alpine for better compatibility
+FROM eclipse-temurin:17-jre
 WORKDIR /app
 
 # Create a non-root user
-RUN addgroup -S spring && adduser -S spring -G spring
+RUN groupadd -r spring && useradd -r -g spring spring
 USER spring:spring
 
 # Copy the JAR from build stage
