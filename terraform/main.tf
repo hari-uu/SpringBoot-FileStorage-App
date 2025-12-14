@@ -19,23 +19,84 @@ provider "aws" {
 # Data source to get current AWS account ID
 data "aws_caller_identity" "current" {}
 
-# Data source to get default VPC
-data "aws_vpc" "default" {
-  default = true
+# --- Networking Infrastructure ---
+
+# 1. Create a dedicated VPC
+resource "aws_vpc" "main" {
+  cidr_block           = "10.0.0.0/16"
+  enable_dns_hostnames = true
+  enable_dns_support   = true
+
+  tags = {
+    Name        = "${var.app_name}-vpc"
+    Environment = var.environment
+    ManagedBy   = "Terraform"
+  }
 }
 
-# Data source to get subnets in default VPC
-data "aws_subnets" "public" {
-  filter {
-    name   = "vpc-id"
-    values = [data.aws_vpc.default.id]
+# 2. Create Internet Gateway for Public Internet Access
+resource "aws_internet_gateway" "main" {
+  vpc_id = aws_vpc.main.id
+
+  tags = {
+    Name        = "${var.app_name}-igw"
+    Environment = var.environment
+    ManagedBy   = "Terraform"
   }
-  
-  # Only select subnets that map public IPs on launch (default subnets do this)
-  filter {
-     name   = "map-public-ip-on-launch"
-     values = ["true"]
+}
+
+# 3. Create Public Subnets (in two availability zones for redundancy)
+resource "aws_subnet" "public_1" {
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = "10.0.1.0/24"
+  availability_zone       = "${var.aws_region}a"
+  map_public_ip_on_launch = true
+
+  tags = {
+    Name        = "${var.app_name}-public-subnet-1"
+    Environment = var.environment
+    ManagedBy   = "Terraform"
   }
+}
+
+resource "aws_subnet" "public_2" {
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = "10.0.2.0/24"
+  availability_zone       = "${var.aws_region}b"
+  map_public_ip_on_launch = true
+
+  tags = {
+    Name        = "${var.app_name}-public-subnet-2"
+    Environment = var.environment
+    ManagedBy   = "Terraform"
+  }
+}
+
+# 4. Create Public Route Table
+resource "aws_route_table" "public" {
+  vpc_id = aws_vpc.main.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.main.id
+  }
+
+  tags = {
+    Name        = "${var.app_name}-public-rt"
+    Environment = var.environment
+    ManagedBy   = "Terraform"
+  }
+}
+
+# 5. Associate Subnets with Route Table
+resource "aws_route_table_association" "public_1" {
+  subnet_id      = aws_subnet.public_1.id
+  route_table_id = aws_route_table.public.id
+}
+
+resource "aws_route_table_association" "public_2" {
+  subnet_id      = aws_subnet.public_2.id
+  route_table_id = aws_route_table.public.id
 }
 
 # ECR Repository for Docker images
@@ -163,7 +224,7 @@ resource "aws_iam_role_policy" "ecs_task_s3_policy" {
 resource "aws_security_group" "ecs_tasks" {
   name        = "${var.app_name}-ecs-tasks-sg"
   description = "Security group for ECS tasks"
-  vpc_id      = data.aws_vpc.default.id
+  vpc_id      = aws_vpc.main.id
 
   ingress {
     description = "HTTP from anywhere"
@@ -294,7 +355,7 @@ resource "aws_ecs_service" "app" {
 
   network_configuration {
     # Use only public subnets for ECS tasks to allow outbound internet access
-    subnets          = data.aws_subnets.public.ids
+    subnets          = [aws_subnet.public_1.id, aws_subnet.public_2.id]
     security_groups  = [aws_security_group.ecs_tasks.id]
     assign_public_ip = true
   }
