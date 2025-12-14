@@ -25,7 +25,7 @@ data "aws_vpc" "default" {
 }
 
 # Data source to get subnets in default VPC
-data "aws_subnets" "default" {
+data "aws_subnets" "public" {
   filter {
     name   = "vpc-id"
     values = [data.aws_vpc.default.id]
@@ -287,7 +287,8 @@ resource "aws_ecs_service" "app" {
   launch_type     = "FARGATE"
 
   network_configuration {
-    subnets          = data.aws_subnets.default.ids
+    # Use only public subnets for ECS tasks to allow outbound internet access
+    subnets          = data.aws_subnets.public.ids
     security_groups  = [aws_security_group.ecs_tasks.id]
     assign_public_ip = true
   }
