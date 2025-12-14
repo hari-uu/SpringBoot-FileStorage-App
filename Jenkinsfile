@@ -141,8 +141,8 @@ pipeline {
                             NEW_TASK_INFO=\$(aws ecs register-task-definition --region ${AWS_REGION} --cli-input-json "\$NEW_TASK_DEF")
                             NEW_REVISION=\$(echo \$NEW_TASK_INFO | jq '.taskDefinition.revision')
                             
-                            # Update ECS service with new task definition
-                            aws ecs update-service --cluster ${ECS_CLUSTER} --service ${ECS_SERVICE} --task-definition ${ECS_TASK_DEFINITION}:\$NEW_REVISION --region ${AWS_REGION}
+                            # Update ECS service with new task definition and FORCE deployment
+                            aws ecs update-service --cluster ${ECS_CLUSTER} --service ${ECS_SERVICE} --task-definition ${ECS_TASK_DEFINITION}:\$NEW_REVISION --force-new-deployment --region ${AWS_REGION}
                             
                             # Wait for service to stabilize
                             echo "Waiting for ECS service to stabilize..."
