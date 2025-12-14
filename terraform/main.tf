@@ -30,6 +30,12 @@ data "aws_subnets" "public" {
     name   = "vpc-id"
     values = [data.aws_vpc.default.id]
   }
+  
+  # Only select subnets that map public IPs on launch (default subnets do this)
+  filter {
+     name   = "map-public-ip-on-launch"
+     values = ["true"]
+  }
 }
 
 # ECR Repository for Docker images
