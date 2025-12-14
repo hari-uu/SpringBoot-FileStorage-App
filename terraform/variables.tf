@@ -83,3 +83,9 @@ variable "create_s3_bucket" {
   type        = bool
   default     = false
 }
+
+
+variable "public_subnet_ids" {
+  type        = list(string)
+  description = "List of public subnet IDs for ECS tasks"
+}
