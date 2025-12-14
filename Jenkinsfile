@@ -19,8 +19,8 @@ pipeline {
         ECS_SERVICE = 'file-storage-service'
         ECS_TASK_DEFINITION = 'file-storage-task'
         
-        // Docker Configuration (for macOS Docker Desktop)
-        DOCKER_HOST = 'unix:///Users/hari/Library/Containers/com.docker.docker/Data/docker-cli.sock'
+        // Docker Configuration (Standard path for macOS Docker Desktop)
+        DOCKER_HOST = 'unix:///var/run/docker.sock'
         
         // Branch to deploy (only main/master branch will deploy to ECS)
         DEPLOY_BRANCH = 'main'
@@ -82,14 +82,17 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    echo 'debugging docker environment...'
-                    sh 'docker version'
-                    sh 'docker info'
-                    
                     echo 'Building Docker image...'
-                    // Using direct shell command instead of wrapper to debug
+                    
+                    // Pull base images to prevent timeouts/errors
+                    sh 'docker pull maven:3.9.11-eclipse-temurin-17'
+                    sh 'docker pull eclipse-temurin:17-jre'
+                    
+                    // Build and tag
                     sh "docker build -t ${ECR_REPOSITORY}:${IMAGE_TAG} ."
                     sh "docker tag ${ECR_REPOSITORY}:${IMAGE_TAG} ${ECR_REPOSITORY}:latest"
+                    
+                    echo 'Docker image built successfully!'
                 }
             }
         }
