@@ -100,13 +100,18 @@ pipeline {
         stage('Push to ECR') {
             steps {
                 script {
-                    // Use AWS credentials from Jenkins
-                    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', 
-                                      credentialsId: 'aws-credentials']]) {
+                    // Using standard usernamePassword binding (works without AWS plugin)
+                    // AWS Access Key -> username variable
+                    // AWS Secret Key -> password variable
+                    withCredentials([usernamePassword(credentialsId: 'aws-credentials', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
                         sh """
+                            # Login to ECR
                             aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}
+                            
+                            # Push images
                             docker tag ${ECR_REPOSITORY}:${IMAGE_TAG} ${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}
                             docker tag ${ECR_REPOSITORY}:latest ${ECR_REGISTRY}/${ECR_REPOSITORY}:latest
+                            
                             docker push ${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}
                             docker push ${ECR_REGISTRY}/${ECR_REPOSITORY}:latest
                         """
@@ -126,8 +131,7 @@ pipeline {
                 script {
                     echo "Deploying to ECS from branch: ${env.GIT_BRANCH}"
                     
-                    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', 
-                                      credentialsId: 'aws-credentials']]) {
+                    withCredentials([usernamePassword(credentialsId: 'aws-credentials', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
                         sh """
                             # Update ECS task definition with new image
                             TASK_DEFINITION=\$(aws ecs describe-task-definition --task-definition ${ECS_TASK_DEFINITION} --region ${AWS_REGION})
