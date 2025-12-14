@@ -88,11 +88,11 @@ pipeline {
                     sh 'docker pull maven:3.9.11-eclipse-temurin-17'
                     sh 'docker pull eclipse-temurin:17-jre'
                     
-                    // Build and tag
-                    sh "docker build -t ${ECR_REPOSITORY}:${IMAGE_TAG} ."
+                    // Build for AMD64 architecture (Required for AWS Fargate)
+                    sh "docker build --platform linux/amd64 -t ${ECR_REPOSITORY}:${IMAGE_TAG} ."
                     sh "docker tag ${ECR_REPOSITORY}:${IMAGE_TAG} ${ECR_REPOSITORY}:latest"
                     
-                    echo 'Docker image built successfully!'
+                    echo 'Docker image built successfully for linux/amd64!'
                 }
             }
         }
